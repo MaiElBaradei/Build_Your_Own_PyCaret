@@ -95,15 +95,19 @@ if dataset is not None:
     if remove_outliers:
         outliers_method = st.selectbox("Outliers Method", ["iforest", "ee", "lof"])
         outliers_threshold = st.number_input("Outliers Threshold", 0.05)
+    else:
+        outliers_method = "iforest"
+        outliers_threshold = 0.05
 
     if st.button("Setup Experiment"):
         if problem_type == "Classification":
             s = ClassificationExperiment()
         elif problem_type == "Regression":
             s = RegressionExperiment()
-        s.setup(
+        s= dataSetup(
             data=data,
             target=target,
+            problem_type=problem_type,
             numeric_imputation=numeric_imputation,
             categorical_imputation=categorical_imputation,
             numeric_features=numeric_features,
@@ -133,8 +137,8 @@ if dataset is not None:
         best_model = s.automl(optimize = optimizer)
         st.write("Best Model: ", best_model)
         st.markdown("### Save Model")
-        save_model = st.button("Save Model")
-        if save_model:
+        save = st.button("Save Model")
+        if save:
             s.save_model(best_model, "best_model")
             st.success("Model Saved")
             if st.button('Download Model'):
