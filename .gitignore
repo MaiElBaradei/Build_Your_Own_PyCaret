@@ -1,1 +1,5 @@
 .env
+.vscode
+Iris.csv
+streamlit_debug.py
+logs.log
