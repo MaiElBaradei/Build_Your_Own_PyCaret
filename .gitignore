@@ -3,3 +3,4 @@
 Iris.csv
 streamlit_debug.py
 logs.log
+__pycache__
