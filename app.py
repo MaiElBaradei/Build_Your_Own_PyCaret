@@ -1,15 +1,52 @@
+"""
+This module provides a Streamlit application for setting up and running machine learning experiments using PyCaret.
+"""
+
 from data_handler import dataSetup
 import streamlit as st
 import pandas as pd
 from pycaret.classification import *
 from pycaret.regression import *
 
+# Initialize session state variables
+if "setupExperiment" not in st.session_state:
+    st.session_state.setupExperiment = False
+
+if "optimizeModels" not in st.session_state:
+    st.session_state.optimizeModels = False
+
+if "saveModel" not in st.session_state:
+    st.session_state.saveModel = False
 
 
+def setupExperiment():
+    """
+    Function to set the session state variable 'setupExperiment' to True.
+    """
+    st.session_state.setupExperiment = True
+
+
+def optimizeModels():
+    """
+    Function to set the session state variable 'optimizeModels' to True.
+    """
+    st.session_state.optimizeModels = True
+
+
+def saveModel():
+    """
+    Function to set the session state variable 'saveModel' to True.
+    """
+    st.session_state.saveModel = True
+
+
+# Streamlit application starts here
 st.title("Build Your Model Using PyCaret")
 st.markdown("### Upload Dataset")
 st.markdown("Please upload your dataset in CSV, Excel (xls/xlsx), or JSON format.")
 dataset = st.file_uploader("Upload Dataset", type=["csv", "xls", "xlsx", "json"])
+
+
 if dataset is not None:
     if dataset.name.endswith("csv"):
         data = pd.read_csv(dataset)
@@ -21,11 +58,13 @@ if dataset is not None:
     st.write(data.head())
     st.markdown("### Dataset Description")
     st.write(data.shape)
-    column_info = pd.DataFrame({
-    'Column': data.columns,
-    'Data Type': data.dtypes.values,
-    'Non-Null Count': data.notnull().sum().values
-    })
+    column_info = pd.DataFrame(
+        {
+            "Column": data.columns,
+            "Data Type": data.dtypes.values,
+            "Non-Null Count": data.notnull().sum().values,
+        }
+    )
     st.write(column_info)
     st.write(data.describe())
 
@@ -95,19 +134,20 @@ if dataset is not None:
     if remove_outliers:
         outliers_method = st.selectbox("Outliers Method", ["iforest", "ee", "lof"])
         outliers_threshold = st.number_input("Outliers Threshold", 0.05)
-    else:
-        outliers_method = "iforest"
-        outliers_threshold = 0.05
 
-    if st.button("Setup Experiment"):
+    # session_state = st.session_state.get(s={}, reinit=True)
+    if (
+        st.button("Setup Experiment", on_click=setupExperiment)
+        or st.session_state.setupExperiment
+    ):
+
         if problem_type == "Classification":
             s = ClassificationExperiment()
         elif problem_type == "Regression":
             s = RegressionExperiment()
-        s= dataSetup(
+        s.setup(
             data=data,
             target=target,
-            problem_type=problem_type,
             numeric_imputation=numeric_imputation,
             categorical_imputation=categorical_imputation,
             numeric_features=numeric_features,
@@ -118,10 +158,12 @@ if dataset is not None:
             ordinal_features=ordinal_features,
             max_encoding_ohe=max_encoding_ohe,
             remove_outliers=remove_outliers,
-            outliers_method=outliers_method,
-            outliers_threshold=outliers_threshold,
+            outliers_method="iforest",
+            outliers_threshold=0.05,
         )
+
         st.success("Experiment Setup Complete")
+
         st.markdown("### Experiment Details")
         st.table(s.pull())
         st.write("Target Column: ", target)
@@ -130,16 +172,39 @@ if dataset is not None:
         top3 = s.compare_models(n_select=3)
         st.table(s.pull())
         st.markdown("Choose the metric you want to use for model optimization")
-        optimizer = st.selectbox("Optimizer", ["Accuracy", "AUC", "Recall", "Precision", "F1", "MSE", "RMSE", "MAE", "R2", "MAPE", "RMSLE", "QWK", "Kappa", "MCC"])
-        tuned_top3 = [s.tune_model(i) for i in top3]
-        blender = s.blend_models(tuned_top3)
-        stacker = s.stack_models(tuned_top3)
-        best_model = s.automl(optimize = optimizer)
-        st.write("Best Model: ", best_model)
-        st.markdown("### Save Model")
-        save = st.button("Save Model")
-        if save:
-            s.save_model(best_model, "best_model")
-            st.success("Model Saved")
-            if st.button('Download Model'):
-                st.download_button(label='Download Model', data=best_model, file_name='model.pkl')
+        optimizer = st.selectbox(
+            "Optimizer",
+            [
+                "Accuracy",
+                "AUC",
+                "Recall",
+                "Precision",
+                "F1",
+                "MSE",
+                "RMSE",
+                "MAE",
+                "R2",
+                "MAPE",
+                "RMSLE",
+                "QWK",
+                "Kappa",
+                "MCC",
+            ],
+        )
+        if (
+            st.button("Optimize Models", on_click=optimizeModels)
+            or st.session_state.optimizeModels
+        ):
+            tuned_top3 = [s.tune_model(i) for i in top3]
+            blender = s.blend_models(tuned_top3)
+            stacker = s.stack_models(tuned_top3)
+            best_model = s.automl(optimize=optimizer)
+            st.write("Best Model: ", best_model)
+            st.markdown("### Save Model")
+            save = (
+                st.button("Save Model", on_click=saveModel)
+                or st.session_state.saveModel
+            )
+            if save or st.session_state.saveModel:
+                s.save_model(best_model, "best_model")
+                st.success("Model Saved")
