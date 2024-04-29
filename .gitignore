@@ -2,5 +2,5 @@
 .vscode
 Iris.csv
 streamlit_debug.py
-logs.log
 __pycache__
+logs.log
