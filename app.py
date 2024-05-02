@@ -5,8 +5,7 @@ This module provides a Streamlit application for setting up and running machine 
 from data_handler import dataSetup
 import streamlit as st
 import pandas as pd
-from pycaret.classification import *
-from pycaret.regression import *
+
 
 # Initialize session state variables
 if "setupExperiment" not in st.session_state:
@@ -142,8 +141,12 @@ if dataset is not None:
     ):
 
         if problem_type == "Classification":
+            from pycaret.classification import *
+
             s = ClassificationExperiment()
         elif problem_type == "Regression":
+            from pycaret.regression import *
+
             s = RegressionExperiment()
         s.setup(
             data=data,
@@ -191,6 +194,8 @@ if dataset is not None:
                 "MCC",
             ],
         )
+
+        #optimizer = st.selectbox(get_metrics())
         if (
             st.button("Optimize Models", on_click=optimizeModels)
             or st.session_state.optimizeModels
@@ -201,10 +206,9 @@ if dataset is not None:
             best_model = s.automl(optimize=optimizer)
             st.write("Best Model: ", best_model)
             st.markdown("### Save Model")
-            save = (
+            if (
                 st.button("Save Model", on_click=saveModel)
                 or st.session_state.saveModel
-            )
-            if save or st.session_state.saveModel:
+            ):
                 s.save_model(best_model, "best_model")
                 st.success("Model Saved")
