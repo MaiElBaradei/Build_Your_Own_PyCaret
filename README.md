@@ -24,7 +24,7 @@ This project provides a Streamlit application for simplifying the setup and exec
 - Pandas
 
 ## Installation
-1. Clone the repository: `git clone https://github.com/yourusername/streamlit-pycaret-ml-experiments.git`
+1. Clone the repository: `git clone https://github.com/MaiElBaradei/streamlit-pycaret-ml-experiments.git`
 2. Install dependencies: `pip install -r requirements.txt`
 3. Run the Streamlit app: `streamlit run app.py`
 
